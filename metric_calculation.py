@@ -13,6 +13,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import model
+import dataframe
+
 
 # ------------------------------------------------------------------
 # Metric 1 (Phase 1-a)
@@ -177,27 +180,35 @@ def compute_metric2(
 if __name__ == "__main__":
 
     # Paths (adapt as needed)
-    DATA_PATH = Path("data")
+    BASE_DIR = Path(__file__).resolve().parent
+    DATA_DIR = BASE_DIR/ "SUBMISSION" / "DataFiles" / "TRAIN"
+    intento =1
+    intento += 1
+
+
 
     # ---- Load data ----
     # The auxiliar.metric_computation.csv contains the 'bucket', 'avg_vol', 'country' and 'brand_name' 
     # columns, and should be calculated before running this script based on the train_data.csv file
     # (take a look at the documentation for details on how to calculate 'bucket' and 'avg_vol').
-    df_aux = pd.read_csv(DATA_PATH / "auxiliar_metric_computation.csv")
-    train_data = pd.read_csv(DATA_PATH / "train_data.csv")
-    submission_data = pd.read_csv(DATA_PATH / "submission_data.csv")
-    submission = pd.read_csv(DATA_PATH / "submission_template.csv")
+    df_aux = pd.read_csv(DATA_DIR / "auxiliar_metric_computation.csv")
+    train_data = pd.read_csv(DATA_DIR / "train_data.csv")
+    submission_data = pd.read_csv(DATA_DIR / "submission_data.csv")
+    submission = pd.read_csv(DATA_DIR / "submission_template.csv")
 
     # ---- Custom train/validation split ----
-    train, validation = None # your_train_validation_split_function(train_data)
+    train, validation = None  your_train_validation_split_function(train_data)
 
     # ---- Model training ----
     # Train your model here
+    model = model.ModelNovartis()
+    train.train(model)
     
     # ---- Predictions on validation set ----
     prediction = validation.copy()
     prediction["volume"] = None #model.predict(validation)
 
+    dataframe.split_function(dataframe.dataframe())
     # ---- Compute metrics on validation set ----
     m1 = compute_metric1(validation, prediction, df_aux)
     m2 = compute_metric2(validation, prediction, df_aux)
@@ -213,8 +224,8 @@ if __name__ == "__main__":
     # ...
 
     # Save submission
-    SAVE_PATH = Path("path/to/save/folder")
-    ATTEMPT = "attempt_x"
+    SAVE_PATH = Path("./Entregable")
+    ATTEMPT = f"attempt{intento}"
     submission.to_csv(SAVE_PATH / f"submission_{ATTEMPT}.csv", sep=",", index=False)
 
     

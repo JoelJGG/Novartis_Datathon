@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 
 class ModelNovartis(nn.Module): 
     def __init__(self,inputs=126,outputs=24):

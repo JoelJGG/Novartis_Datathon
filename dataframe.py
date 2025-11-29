@@ -1,3 +1,10 @@
+from sklearn.model_selection import train_test_split
+import pandas as pd
+from pathlib import Path
+import torch
+import torch.nn as nn
+from torch.utils.data import TensorDataset, DataLoader
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR/ "SUBMISSION" / "DataFiles" / "TRAIN"
 
@@ -67,4 +74,9 @@ def get_dataloader(batch_size=503):
     dataset = TensorDataset(X, y)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return dataloader
+
+def split_function(X,y):
+    train, validation = train_test_split(X,y, validation_size = 0.2, random_state = 42, shuffle = True)
+    return train, validation
+
 
