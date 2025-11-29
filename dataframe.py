@@ -42,7 +42,8 @@ def dataframe():
         .merge(gen_wide, on=["country", "brand_name"], how="left")
         .merge(vol_wide, on=["country", "brand_name"], how="left")
     )
-
+    brands_train = merged_df["brand_name"]
+    print(brands_train.head())
     merged_df = merged_df.drop(columns=["brand_name"])
 
     cols = ["biological", "small_molecule"]
@@ -85,5 +86,5 @@ def get_dataloader(batch_size=512):
 def split_function(X,y):
     train, validation = train_test_split(X,y, validation_size = 0.2, random_state = 42, shuffle = True)
     return train, validation
-
+get_dataloader()
 
