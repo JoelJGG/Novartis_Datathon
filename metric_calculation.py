@@ -23,22 +23,54 @@ import dataframe
 
 def _compute_pe_phase1a(group: pd.DataFrame) -> float:
     """Compute PE for one (country, brand, bucket) group following the corrected Metric 1 formula."""
+    print("entra a compute")
     avg_vol = group["avg_vol"].iloc[0]
+    print(avg_vol)
     if avg_vol == 0 or np.isnan(avg_vol):
         return np.nan
+    print("peta post if")
+ # --- Normalizamos tipos dentro del grupo ---
+    # Hacemos copia para no tocar el original de pandas groupby
+    group = group.copy()
+
+    # Aseguramos que months_postgx sea numérico
+    group["months_postgx"] = pd.to_numeric(group["months_postgx"], errors="coerce")
+
+    # Aseguramos que volume_actual y volume_predict sean numéricos
+    group["volume_actual"] = pd.to_numeric(group["volume_actual"], errors="coerce")
+    group["volume_predict"] = pd.to_numeric(group["volume_predict"], errors="coerce")
 
     def sum_abs_diff(month_start: int, month_end: int) -> float:
         """Sum of absolute differences sum(|actual - pred|)."""
+        print("group[\"months_postgx\"]")
+
+        print(group["months_postgx"])
+        print(type(group["months_postgx"]))
+
+
         subset = group[(group["months_postgx"] >= month_start) & (group["months_postgx"] <= month_end)]
-        return (subset["volume_actual"] - subset["volume_predict"]).abs().sum()
+        print("subset")
+        print(subset)
+      
+        actual = subset["volume_actual"]
+        pred = subset["volume_predict"]
+        mask = actual.notna() & pred.notna()
+
+        if not mask.any():
+            return 0.0
+
+        return (actual[mask] - pred[mask]).abs().sum()
     
     def abs_sum_diff(month_start: int, month_end: int) -> float:
         """Absolute difference of |sum(actuals) - sum(pred)|."""
+
         subset = group[(group["months_postgx"] >= month_start) & (group["months_postgx"] <= month_end)]
         sum_actual = subset["volume_actual"].sum()
         sum_pred = subset["volume_predict"].sum()
         return abs(sum_actual - sum_pred)
 
+    print("sum_abs_diff(0, 23)")
+    print(sum_abs_diff(0, 23))
     term1 = 0.2 * sum_abs_diff(0, 23) / (24 * avg_vol)
     term2 = 0.5 * abs_sum_diff(0, 5) / (6 * avg_vol)
     term3 = 0.2 * abs_sum_diff(6, 11) / (6 * avg_vol)
@@ -67,6 +99,18 @@ def _metric1(df_actual: pd.DataFrame, df_pred: pd.DataFrame, df_aux: pd.DataFram
     ).merge(df_aux, on=["country", "brand_name"], how="left")
 
     merged["start_month"] = merged.groupby(["country", "brand_name"])["months_postgx"].transform("min")
+    print("merged.head()")
+    print(merged.head())
+
+    merged = merged.iloc[1:].reset_index(drop=True)
+
+    merged["start_month"] = pd.to_numeric(merged["start_month"])
+    print("start month")
+    print(list(merged["start_month"]))
+
+
+    print("Primera puta fila")
+    print(merged.iloc[0])
     merged = merged[merged["start_month"] == 0].copy()
 
     print("merged.head()")
@@ -76,17 +120,28 @@ def _metric1(df_actual: pd.DataFrame, df_pred: pd.DataFrame, df_aux: pd.DataFram
         .apply(_compute_pe_phase1a)
         .reset_index(name="PE")
     )
+    merged["months_postgx"] = pd.to_numeric(merged["months_postgx"], errors="coerce")
 
     print("pe_results.head()")
     print(pe_results.head())
 
     bucket1 = pe_results[pe_results["bucket"] == 1]
     bucket2 = pe_results[pe_results["bucket"] == 2]
+    print("bucket1")
+    print(bucket1)
+    print("bucket2")
+    print(bucket2)
+
+#REVISION FUERTE
 
     n1 = bucket1[["country", "brand_name"]].drop_duplicates().shape[0]
     n2 = bucket2[["country", "brand_name"]].drop_duplicates().shape[0]
 
-    return (2/n1) * bucket1["PE"].sum() + (1/n2) * bucket2["PE"].sum()
+
+    term1 = (2/n1) * bucket1["PE"].sum() if n1 > 0 else 0.0
+    term2 = (1/n2) * bucket2["PE"].sum() if n2 > 0 else 0.0
+
+    return term1 + term2
 
 
 def compute_metric1(
@@ -169,7 +224,7 @@ def _metric2(df_actual: pd.DataFrame, df_pred: pd.DataFrame, df_aux: pd.DataFram
     pe_results = (
         merged_data.groupby(["country", "brand_name", "bucket"])
         .apply(_compute_pe_phase1b)
-        .reset_index(name="PE")
+        .reset_index(names="PE")
     )
 
     bucket1 = pe_results[pe_results["bucket"] == 1]
@@ -212,10 +267,10 @@ if __name__ == "__main__":
     # The auxiliar.metric_computation.csv contains the 'bucket', 'avg_vol', 'country' and 'brand_name' 
     # columns, and should be calculated before running this script based on the train_data.csv file
     # (take a look at the documentation for details on how to calculate 'bucket' and 'avg_vol').
-    df_aux = pd.read_csv(DATA_DIR / "auxiliar_metric_computation.csv")
-    train_data = pd.read_csv(DATA_DIR / "train_data.csv")
-    submission_data = pd.read_csv(DATA_DIR / "submission_data.csv")
-    submission = pd.read_csv(DATA_DIR / "submission_template.csv")
+    #df_aux = pd.read_csv(BASE_DIR / "SUBMISSION" / "MetricFiles" / "auxiliar_metric_computation.csv")
+    #train_data = pd.read_csv(DATA_DIR / "train_data.csv")
+    #submission_data = pd.read_csv(DATA_DIR / "submission_data.csv")
+    #submission = pd.read_csv(DATA_DIR / "submission_template.csv")
 
     # ---- Custom train/validation split ----
     X,y,countries, brands, df_aux = dataframe.dataframe()
@@ -228,7 +283,7 @@ if __name__ == "__main__":
     
     # ---- Predictions on validation set ----
     prediction = validation.copy()
-    prediction["volume"] = None #model.predict(validation)
+    prediction["volume"] = model.forward(validation)
 
     # ---- Compute metrics on validation set ----
     m1 = compute_metric1(validation, prediction, df_aux)
@@ -240,7 +295,7 @@ if __name__ == "__main__":
     
     # ---- Generate submission file ----
     # Fill in predicted 'volume' values of the submission 
-    submission["volume"] = None #model.predict(submission_data)
+    submission["volume"] = model.forward(submission_data)
 
     # ...
 
@@ -248,5 +303,3 @@ if __name__ == "__main__":
     SAVE_PATH = Path("./Entregable")
     ATTEMPT = f"attempt{intento}"
     submission.to_csv(SAVE_PATH / f"submission_{ATTEMPT}.csv", sep=",", index=False)
-
-    
