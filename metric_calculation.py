@@ -84,6 +84,18 @@ def compute_metric1(
     df_actual: pd.DataFrame,
     df_pred: pd.DataFrame,
     df_aux: pd.DataFrame) -> float:
+    df_actual = pd.DataFrame(df_actual.cpu().detach().numpy())
+    df_pred = pd.DataFrame(df_pred.cpu().detach().numpy())
+    print("df_actual.head()")
+
+    print(df_actual.head())
+
+    print("df_pred.head()")
+
+    print(df_pred.head())
+
+
+
     """Compute Metric 1 (Phase 1).
 
     :param df_actual: Actual volume data
@@ -197,7 +209,7 @@ if __name__ == "__main__":
     submission = pd.read_csv(DATA_DIR / "submission_template.csv")
 
     # ---- Custom train/validation split ----
-    X,y = dataframe.dataframe()
+    X,y,countries, brands, df_aux = dataframe.dataframe()
     train, validation = dataframe.split_function(X,y)
 
     # ---- Model training ----
