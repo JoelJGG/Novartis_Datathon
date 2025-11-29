@@ -55,6 +55,10 @@ def _metric1(df_actual: pd.DataFrame, df_pred: pd.DataFrame, df_aux: pd.DataFram
     :param df_aux: Auxiliary data with buckets and avg_vol
     :return: Weighted PE total (Phase 1)
     """
+    print("df_actual.head()")
+    print(df_actual.head()) 
+    print("df_pred.head()")
+    print(df_pred.head())
     merged = df_actual.merge(
         df_pred,
         on=["country", "brand_name", "months_postgx"],
@@ -65,11 +69,16 @@ def _metric1(df_actual: pd.DataFrame, df_pred: pd.DataFrame, df_aux: pd.DataFram
     merged["start_month"] = merged.groupby(["country", "brand_name"])["months_postgx"].transform("min")
     merged = merged[merged["start_month"] == 0].copy()
 
+    print("merged.head()")
+    print(merged.head())
     pe_results = (
         merged.groupby(["country", "brand_name", "bucket"])
         .apply(_compute_pe_phase1a)
         .reset_index(name="PE")
     )
+
+    print("pe_results.head()")
+    print(pe_results.head())
 
     bucket1 = pe_results[pe_results["bucket"] == 1]
     bucket2 = pe_results[pe_results["bucket"] == 2]
@@ -84,8 +93,8 @@ def compute_metric1(
     df_actual: pd.DataFrame,
     df_pred: pd.DataFrame,
     df_aux: pd.DataFrame) -> float:
-    df_actual = pd.DataFrame(df_actual.cpu().detach().numpy())
-    df_pred = pd.DataFrame(df_pred.cpu().detach().numpy())
+    df_actual = pd.DataFrame(df_actual, columns=["country","brand_name","months_postgx","volume_actual"])
+    df_pred = pd.DataFrame(df_pred, columns=["country","brand_name","months_postgx","volume_predict"])
     print("df_actual.head()")
 
     print(df_actual.head())

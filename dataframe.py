@@ -97,7 +97,7 @@ def dataframe():
 
 
     brands_train = merged_df["brand_name"]
-    print(brands_train.head())
+    #print(brands_train.head())
 
     countries = merged_df["country"]
     brands = merged_df["brand_name"]
@@ -122,15 +122,15 @@ def dataframe():
 
 
     pd.set_option('display.max_columns', None)
-    print(merged_df.head())
+    #print(merged_df.head())
     #print(merged_df.shape)
     #print("N categories country:", df_med_train['country'].nunique())
     #print("N categories ther_area:", df_med_train['ther_area'].nunique())
     #print("N categories main_package:", df_med_train['main_package'].nunique())
     
     #Cargando valores de X e y
-    X = merged_df.iloc[:,:126].values
-    y = merged_df.iloc[:,126:].values
+    X = merged_df.iloc[:,:72].values
+    y = merged_df.iloc[:,72:].values
 
     X = torch.from_numpy(X.astype(np.float32))
     y = torch.from_numpy(y.astype(np.float32))
@@ -147,4 +147,3 @@ def get_dataloader(batch_size=512):
 def split_function(X,y):
     train, validation = train_test_split(X,y, validation_size = 0.1, random_state = 42, shuffle = True)
     return train, validation
-

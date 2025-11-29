@@ -28,23 +28,29 @@ def train(modelo, epochs=5000, batch_size=126, lr=1e-3):
         print("dataloader")
         print(dataloader)
         predictions = [["country","brand_name","months_postgx","volume"]]
+        y_metric = [["country","brand_name","months_postgx","volume"]]
         print("predictions")
 
         for k,(X, y) in enumerate(dataloader):
-            
+            print("dentro del for")
+            print(y)
             X, y = X.to(device), y.to(device)
 
             optimizer.zero_grad()
             pred = modelo.forward(X)
-            
+            print("pred")
+            print(pred)
+            print(len(pred))
             for i in range(24):
-                predictions.append([countries[k],brands[k],str(i),pred[i]])
+                pred_metric = pred[i].detach().cpu().numpy()
+                predictions.append([countries[k],brands[k],str(i),pred_metric[i]])
+                y_metric.append([countries[k],brands[k],str(i),y[i].detach().cpu().numpy()])
                 #country,brand,[i],vols[i]
 
             #Mean generic erosion (bucket)
 
             print(predictions)
-            loss = metric_calculation.compute_metric1(y,pred,df_aux)
+            loss = metric_calculation.compute_metric1(y_metric,predictions,df_aux)
             loss.backward()
             optimizer.step()
 
