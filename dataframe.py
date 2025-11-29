@@ -42,16 +42,23 @@ def dataframe():
         .merge(gen_wide, on=["country", "brand_name"], how="left")
         .merge(vol_wide, on=["country", "brand_name"], how="left")
     )
+
     brands_train = merged_df["brand_name"]
     print(brands_train.head())
-    merged_df = merged_df.drop(columns=["brand_name"])
+
+    countries = merged_df["country"]
+    brands = merged_df["brand_name"]
+
+    merged_df = merged_df.drop(columns=["country","brand_name"])
+
+
 
     cols = ["biological", "small_molecule"]
     merged_df[cols] = merged_df[cols].astype(float)
 
     merged_df = pd.get_dummies(
         merged_df,
-        columns = ["country", "ther_area", "main_package"],
+        columns = ["ther_area", "main_package"],
         drop_first = False,
         dtype = float)
     onehot_cols = [col for col in merged_df.columns if col.startswith("main_package") or col.startswith("ther_area") or col.startswith("country")]
@@ -59,6 +66,8 @@ def dataframe():
     otras_cols = [col for col in merged_df.columns if col not in onehot_cols]
 
     merged_df = merged_df[onehot_cols + otras_cols]
+
+
 
     pd.set_option('display.max_columns', None)
     print(merged_df.head())
@@ -74,17 +83,17 @@ def dataframe():
     X = torch.from_numpy(X.astype(np.float32))
     y = torch.from_numpy(y.astype(np.float32))
     
-    return X,y
+    return X,y,countries,brands
 
 
 def get_dataloader(batch_size=512):
-    X, y = dataframe()
+    X, y,countries, brands = dataframe()
     dataset = TensorDataset(X, y)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    return dataloader
+    return dataloader,countries,brands
 
 def split_function(X,y):
-    train, validation = train_test_split(X,y, validation_size = 0.2, random_state = 42, shuffle = True)
+    train, validation = train_test_split(X,y, validation_size = 0.1, random_state = 42, shuffle = True)
     return train, validation
-get_dataloader()
 
+get_dataloader()

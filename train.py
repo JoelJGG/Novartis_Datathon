@@ -1,27 +1,47 @@
-def train(model, epochs=5000, batch_size=503, lr=1e-3):
+import metric_calculation
+from tqdm import tqdm
+import model
+
+import dataframe
+import torch.nn as nn
+import torch.optim as optim
+import torch
+
+def train(model, epochs=5000, batch_size=126, lr=1e-3):
     # dataloader de tu función
-    dataloader = get_dataloader(batch_size=batch_size)
+    dataloader,countries,brands = dataframe.get_dataloader(batch_size=batch_size)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
+    print("HOOOOOOLAAAAAAAAAA")
+
 
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
         running_mae = 0.0
         total = 0
-
         train_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs} [Train]", leave=True)
 
-        for X, y in train_bar:
+        predictions = [["country","brand_name","months_postgx","volume"]]
+        print("predictions")
+
+        for k,(X, y) in enumerate(train_bar):
+            
             X, y = X.to(device), y.to(device)
 
             optimizer.zero_grad()
-            pred = model(X)
-            loss = metric_calculation.my_loss_fn(pred,target)
+            pred = model.forward(X)
+            for i in range(24):
+                predictions.append([countries[k],brands[k],str(i),pred[i]])
+                #country,brand,[i],vols[i]
+
+
+            print(predictions)
+            loss = metric_calculation.compute_metric1(pred,target)
             loss.backward()
             optimizer.step()
 
@@ -54,4 +74,5 @@ def train(model, epochs=5000, batch_size=503, lr=1e-3):
     torch.save(model.state_dict(), "novartis_model.pth")
     tqdm.write("Training complete. Model saved as novartis_model.pth")
 
-
+model = model.ModelNovartis()
+train(model)

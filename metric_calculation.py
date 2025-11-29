@@ -197,7 +197,8 @@ if __name__ == "__main__":
     submission = pd.read_csv(DATA_DIR / "submission_template.csv")
 
     # ---- Custom train/validation split ----
-    train, validation = None  your_train_validation_split_function(train_data)
+    X,y = dataframe.dataframe()
+    train, validation = dataframe.split_function(X,y)
 
     # ---- Model training ----
     # Train your model here
@@ -208,7 +209,6 @@ if __name__ == "__main__":
     prediction = validation.copy()
     prediction["volume"] = None #model.predict(validation)
 
-    dataframe.split_function(dataframe.dataframe())
     # ---- Compute metrics on validation set ----
     m1 = compute_metric1(validation, prediction, df_aux)
     m2 = compute_metric2(validation, prediction, df_aux)

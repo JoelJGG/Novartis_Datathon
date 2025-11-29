@@ -43,40 +43,50 @@ imputer = KNNImputer(n_neighbors=10)
 df_all_merge[["n_gxs"]] = imputer.fit_transform(df_all_merge[["n_gxs"]])
 df_all_merge[["hospital_rate"]] = imputer.fit_transform(df_all_merge[["hospital_rate"]])
 
+
+brands = df_all_merge["brand_name"]
+countries = df_all_merge["country"]
+
+
+df_all_merge = df_all_merge.drop(columns=["country","brand_name","month"])
+
+
 # One hot encoding de variables categóricas
 df_all_merge = pd.get_dummies(
     df_all_merge,
-    columns=["country","brand_name","month", "ther_area", "main_package"],
+    columns=["ther_area", "main_package"],
     drop_first=False,
     dtype=float
 )
+
 
 # Mover la columna 'volume' al final
 cols = [c for c in df_all_merge.columns if c != "volume"] + ["volume"]
 df_all_merge = df_all_merge[cols]
 
 # Evaluar importancia de características usando Random Forest
-X = df_all_merge.iloc[:, :-1].copy()
-y = df_all_merge.iloc[:, -1].copy()
-rf = RandomForestRegressor(n_estimators=100, random_state=42)
-rf.fit(X, y)
+#X = df_all_merge.iloc[:, :-1].copy()
+#y = df_all_merge.iloc[:, -1].copy()
+#rf = RandomForestRegressor(n_estimators=100, random_state=42)
+#rf.fit(X, y)
 
-importances = rf.feature_importances_
+#importances = rf.feature_importances_
 
 # Crear DataFrame con nombres de columnas y su importancia
-feat_importances = pd.DataFrame({
-    'feature': X.columns,
-    'importance': importances
-})
+#feat_importances = pd.DataFrame({
+    #'feature': X.columns,
+    #'importance': importances
+#})
 
 # Ordenar de mayor a menor
-feat_importances = feat_importances.sort_values(by='importance', ascending=False)
+#feat_importances = feat_importances.sort_values(by='importance', ascending=False)
 
 # Seleccionar las 20 mejores
-top_20 = feat_importances.head(20)
+#top_20 = feat_importances.head(20)
 
-pd.set_option("display.max_rows", 100)
-print(top_20)
+#pd.set_option("display.max_rows", 100)
+#print(top_20)
+
 
 # Verificar columnas y primeras filas
 print(df_all_merge.head())
