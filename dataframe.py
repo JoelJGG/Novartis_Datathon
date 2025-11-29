@@ -26,7 +26,7 @@ def dataframe():
         .add_prefix("ngxs")
         .reset_index()
     )
-    print(gen_wide.columns)
+
     vol_wide = (
         df_volume_train
         .pivot_table(index=["country", "brand_name"],
@@ -58,7 +58,8 @@ def dataframe():
 
     merged_df = merged_df[onehot_cols + otras_cols]
 
-    #print(merged_df.head())
+    pd.set_option('display.max_columns', None)
+    print(merged_df.head())
     #print(merged_df.shape)
     #print("N categories country:", df_med_train['country'].nunique())
     #print("N categories ther_area:", df_med_train['ther_area'].nunique())
@@ -82,4 +83,4 @@ def get_dataloader(batch_size=512):
 
 
 dataframe()
-get_dataloader()
+#get_dataloader()
