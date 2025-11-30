@@ -17,8 +17,9 @@ def train(modelo, epochs=1000, batch_size=128, lr=1e-3):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     modelo.to(device)
 
-    optimizer = optim.Adam(modelo.parameters(), lr=lr)
-    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(modelo.parameters(), lr=lr, weight_decay=1e-4)
+
+    loss_fn = nn.HuberLoss(delta=1.0)
 
 
     for epoch in range(epochs):
@@ -26,27 +27,14 @@ def train(modelo, epochs=1000, batch_size=128, lr=1e-3):
         running_loss = 0.0
         running_mae = 0.0
         total = 0
-        train_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs} [Train]", leave=True)
-        #print("dataloader")
-        #print(dataloader)
-        predictions = [["country","brand_name","months_postgx","volume"]]
-        y_metric = [["country","brand_name","months_postgx","volume"]]
-        #print("predictions")
+        train_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs}")
 
         for k,(X, y) in enumerate(dataloader):
-            #print("dentro del for")
-            #print(y)
-            X, y = X.to(device), y.to(device)
 
+            X, y = X.to(device), y.to(device)
 
             optimizer.zero_grad()
             pred = modelo.forward(X)
-            #print("y")
-            #print(y.detach().cpu().numpy())
-
-
-            #print("pred")
-            #print(pred.detach().cpu().numpy())
 
             tolerance = 0.10  # 10%
             diff = torch.abs(pred - y)
@@ -54,25 +42,8 @@ def train(modelo, epochs=1000, batch_size=128, lr=1e-3):
             correct = (diff < allowed).float().sum().item()
             total_vals = y.numel()
 
-            accuracy = correct / total_vals
+            accuracy = correct / total_vals * 100
 
-
-
-
-            #print("pred")
-            #print(pred)
-            #print(len(pred[0]))
-            #print(len(pred))
-            bs = X.size(0)
-            for i in range(bs):
-                for j in range(24):
-                    pred_metric = pred[i].detach().cpu().numpy()
-                    predictions.append([countries[k],brands[k],str(j),pred_metric[j]])
-                    y_metric.append([countries[k],brands[k],str(j),y[j].detach().cpu().numpy()])
-                    #country,brand,[i],vols[i]
-
-                #Mean generic erosion (bucket)
-            #print(predictions)
             loss = loss_fn(pred,y)
             loss.backward()
             optimizer.step()
@@ -96,7 +67,6 @@ def train(modelo, epochs=1000, batch_size=128, lr=1e-3):
             # mostramos en la barra de progreso
             train_bar.set_postfix(loss=avg_loss, mae=avg_mae)
             print(f"accuracy: {accuracy} %")
-
 
         # resumen por época
         tqdm.write(
